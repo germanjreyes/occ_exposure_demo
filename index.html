@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Exposure by Occupation</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    // =====================================================================
+    // OCCUPATION DATA - EDIT THIS SECTION WITH YOUR ACTUAL DATA
+    // Format: { name: "Occupation Name", ranking: NUMBER }
+    // Rankings: 1 = most exposed to AI, 100 = least exposed to AI
+    // =====================================================================
+    const occupations = [
+      { name: "Telemarketer", ranking: 1 },
+      { name: "Legal Secretary", ranking: 3 },
+      { name: "Bookkeeping Clerk", ranking: 4 },
+      { name: "Tax Preparer", ranking: 5 },
+      { name: "Insurance Underwriter", ranking: 7 },
+      { name: "Data Entry Clerk", ranking: 8 },
+      { name: "Paralegal", ranking: 10 },
+      { name: "Market Research Analyst", ranking: 12 },
+      { name: "Technical Writer", ranking: 14 },
+      { name: "Financial Analyst", ranking: 16 },
+      { name: "Copywriter", ranking: 18 },
+      { name: "Accountant", ranking: 20 },
+      { name: "Human Resources Specialist", ranking: 22 },
+      { name: "Translator", ranking: 24 },
+      { name: "Customer Service Representative", ranking: 26 },
+      { name: "Journalist", ranking: 28 },
+      { name: "Software Developer", ranking: 32 },
+      { name: "Data Analyst", ranking: 35 },
+      { name: "Graphic Designer", ranking: 38 },
+      { name: "Marketing Manager", ranking: 40 },
+      { name: "Management Consultant", ranking: 42 },
+      { name: "Architect", ranking: 45 },
+      { name: "Mechanical Engineer", ranking: 48 },
+      { name: "Civil Engineer", ranking: 50 },
+      { name: "Project Manager", ranking: 52 },
+      { name: "Sales Representative", ranking: 55 },
+      { name: "Teacher (K-12)", ranking: 58 },
+      { name: "Social Worker", ranking: 60 },
+      { name: "Nurse Practitioner", ranking: 62 },
+      { name: "Physical Therapist", ranking: 65 },
+      { name: "Police Officer", ranking: 68 },
+      { name: "Physician", ranking: 70 },
+      { name: "Dentist", ranking: 72 },
+      { name: "Chef", ranking: 75 },
+      { name: "Firefighter", ranking: 78 },
+      { name: "Electrician", ranking: 80 },
+      { name: "Plumber", ranking: 82 },
+      { name: "Construction Worker", ranking: 85 },
+      { name: "Agricultural Worker", ranking: 88 },
+      { name: "Truck Driver", ranking: 90 },
+      { name: "Landscaper", ranking: 92 },
+      { name: "Roofer", ranking: 95 },
+      { name: "Forestry Worker", ranking: 98 },
+    ];
+    // =====================================================================
+    // END OF OCCUPATION DATA
+    // =====================================================================
+
+    function App() {
+      const [searchTerm, setSearchTerm] = useState('');
+      const [selectedOccupation, setSelectedOccupation] = useState(null);
+      const [showDropdown, setShowDropdown] = useState(false);
+      const [vizStyle, setVizStyle] = useState('steps');
+
+      const filteredOccupations = useMemo(() => {
+        if (!searchTerm) return occupations;
+        return occupations.filter(occ => 
+          occ.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }, [searchTerm]);
+
+      const handleSelect = (occ) => {
+        setSelectedOccupation(occ);
+        setSearchTerm(occ.name);
+        setShowDropdown(false);
+      };
+
+      return (
+        <div style={{
+          minHeight: '100vh',
+          backgroundColor: '#f8fafc',
+          padding: '40px 24px'
+        }}>
+          <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+            
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <h1 style={{
+                fontSize: '26px',
+                fontWeight: '700',
+                color: '#1e293b',
+                marginBottom: '12px'
+              }}>
+                AI Exposure by Occupation
+              </h1>
+              <p style={{ color: '#64748b', fontSize: '15px', lineHeight: '1.6' }}>
+                Enter your intended occupation to see how exposed it is to AI automation.
+                <br />
+                <span style={{ fontSize: '13px' }}>Rankings from 1 (most exposed) to 100 (least exposed)</span>
+              </p>
+            </div>
+
+            {/* Search Box */}
+            <div style={{ position: 'relative', marginBottom: '32px' }}>
+              <div style={{
+                backgroundColor: '#fff',
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                padding: '8px'
+              }}>
+                <input
+                  type="text"
+                  placeholder="Search for your intended occupation..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setShowDropdown(true);
+                    if (!e.target.value) setSelectedOccupation(null);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                  style={{
+                    width: '100%',
+                    padding: '16px 20px',
+                    fontSize: '16px',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '8px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {/* Dropdown */}
+              {showDropdown && searchTerm && filteredOccupations.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '8px',
+                  right: '8px',
+                  backgroundColor: '#fff',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                  marginTop: '8px',
+                  maxHeight: '280px',
+                  overflowY: 'auto',
+                  zIndex: 100
+                }}>
+                  {filteredOccupations.map((occ) => (
+                    <div
+                      key={occ.name}
+                      onClick={() => handleSelect(occ)}
+                      style={{
+                        padding: '14px 20px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                    >
+                      <span style={{ color: '#334155', fontWeight: '500' }}>{occ.name}</span>
+                      <span style={{
+                        fontSize: '12px',
+                        color: '#94a3b8',
+                        backgroundColor: '#f1f5f9',
+                        padding: '4px 10px',
+                        borderRadius: '12px'
+                      }}>
+                        Rank {occ.ranking}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {showDropdown && searchTerm && filteredOccupations.length === 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '8px',
+                  right: '8px',
+                  backgroundColor: '#fff',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                  marginTop: '8px',
+                  padding: '20px',
+                  textAlign: 'center',
+                  color: '#94a3b8'
+                }}>
+                  No matching occupations found
+                </div>
+              )}
+            </div>
+
+            {/* Visualization Style Toggle */}
+            {selectedOccupation && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '8px',
+                marginBottom: '24px',
+                flexWrap: 'wrap'
+              }}>
+                {[
+                  { id: 'steps', label: 'Tiered Steps' },
+                  { id: 'bar', label: 'Gradient Bar' },
+                  { id: 'gauge', label: 'Gauge' },
+                  { id: 'distribution', label: 'Distribution' },
+                  { id: 'card', label: 'Minimal Card' }
+                ].map(style => (
+                  <button
+                    key={style.id}
+                    onClick={() => setVizStyle(style.id)}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: vizStyle === style.id ? '#1e293b' : '#e2e8f0',
+                      color: vizStyle === style.id ? '#fff' : '#64748b'
+                    }}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Visualization Display */}
+            {selectedOccupation && (
+              <div style={{
+                backgroundColor: '#fff',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                padding: '40px 32px',
+                textAlign: 'center'
+              }}>
+                {vizStyle === 'steps' && <TieredSteps ranking={selectedOccupation.ranking} occupation={selectedOccupation.name} />}
+                {vizStyle === 'bar' && <GradientBar ranking={selectedOccupation.ranking} occupation={selectedOccupation.name} />}
+                {vizStyle === 'gauge' && <Gauge ranking={selectedOccupation.ranking} occupation={selectedOccupation.name} />}
+                {vizStyle === 'distribution' && <Distribution ranking={selectedOccupation.ranking} occupation={selectedOccupation.name} />}
+                {vizStyle === 'card' && <MinimalCard ranking={selectedOccupation.ranking} occupation={selectedOccupation.name} />}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!selectedOccupation && (
+              <div style={{
+                backgroundColor: '#fff',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                padding: '60px 32px',
+                textAlign: 'center',
+                color: '#94a3b8'
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+                <p style={{ fontSize: '15px' }}>
+                  Search and select an occupation above to see its AI exposure ranking
+                </p>
+              </div>
+            )}
+
+            {/* Sample Occupations */}
+            <div style={{ marginTop: '40px' }}>
+              <p style={{ fontSize: '13px', color: '#94a3b8', textAlign: 'center', marginBottom: '16px' }}>
+                Or try one of these examples:
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                {['Software Developer', 'Nurse Practitioner', 'Accountant', 'Electrician', 'Teacher (K-12)'].map(name => {
+                  const occ = occupations.find(o => o.name === name);
+                  if (!occ) return null;
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => handleSelect(occ)}
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: '13px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '20px',
+                        backgroundColor: '#fff',
+                        color: '#64748b',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Visualization Components
+
+    function GradientBar({ ranking, occupation }) {
+      const position = ((ranking - 1) / 99) * 100;
+      
+      return (
+        <div style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '24px', color: '#334155', fontSize: '16px' }}>
+            <strong>{occupation}</strong>
+          </div>
+          
+          <div style={{ position: 'relative', marginBottom: '12px' }}>
+            <div style={{
+              height: '36px',
+              borderRadius: '18px',
+              background: 'linear-gradient(to right, #dc2626, #f97316, #eab308, #22c55e, #0ea5e9)',
+              position: 'relative'
+            }}>
+              <div style={{
+                position: 'absolute',
+                left: `${position}%`,
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '28px',
+                height: '44px',
+                backgroundColor: '#1e293b',
+                borderRadius: '8px',
+                border: '3px solid #fff',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+              }} />
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            <span>Most Exposed</span>
+            <span>Least Exposed</span>
+          </div>
+          
+          <div style={{ marginTop: '20px', fontSize: '15px', color: '#475569' }}>
+            Ranking: <strong style={{ fontSize: '18px' }}>{ranking}</strong> of 100
+          </div>
+        </div>
+      );
+    }
+
+    function Gauge({ ranking, occupation }) {
+      const angle = -90 + (((ranking - 1) / 99) * 180);
+      
+      const getColor = (rank) => {
+        if (rank <= 20) return '#dc2626';
+        if (rank <= 40) return '#f97316';
+        if (rank <= 60) return '#eab308';
+        if (rank <= 80) return '#22c55e';
+        return '#0ea5e9';
+      };
+
+      return (
+        <div>
+          <div style={{ marginBottom: '20px', color: '#334155', fontSize: '16px' }}>
+            <strong>{occupation}</strong>
+          </div>
+          
+          <svg width="300" height="170" viewBox="0 0 300 170" style={{ display: 'block', margin: '0 auto' }}>
+            <defs>
+              <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#dc2626" />
+                <stop offset="25%" stopColor="#f97316" />
+                <stop offset="50%" stopColor="#eab308" />
+                <stop offset="75%" stopColor="#22c55e" />
+                <stop offset="100%" stopColor="#0ea5e9" />
+              </linearGradient>
+            </defs>
+            
+            <path d="M 35 145 A 115 115 0 0 1 265 145" fill="none" stroke="#e2e8f0" strokeWidth="22" strokeLinecap="round" />
+            <path d="M 35 145 A 115 115 0 0 1 265 145" fill="none" stroke="url(#gaugeGrad)" strokeWidth="22" strokeLinecap="round" />
+            
+            <g transform={`rotate(${angle}, 150, 145)`}>
+              <line x1="150" y1="145" x2="150" y2="55" stroke="#1e293b" strokeWidth="5" strokeLinecap="round" />
+              <circle cx="150" cy="145" r="14" fill="#1e293b" />
+              <circle cx="150" cy="145" r="7" fill="#fff" />
+            </g>
+            
+            <text x="25" y="165" fontSize="11" fill="#64748b" textAnchor="start">Most Exposed</text>
+            <text x="275" y="165" fontSize="11" fill="#64748b" textAnchor="end">Least Exposed</text>
+          </svg>
+          
+          <div style={{ marginTop: '12px', fontSize: '28px', fontWeight: '700', color: getColor(ranking) }}>
+            {ranking}<span style={{ fontSize: '16px', color: '#94a3b8', fontWeight: '400' }}> / 100</span>
+          </div>
+        </div>
+      );
+    }
+
+    function Distribution({ ranking, occupation }) {
+      const distribution = [];
+      for (let x = 0; x <= 100; x += 2) {
+        const y = 0.8 + 0.4 * Math.sin(x * 0.03) + 0.2 * Math.cos(x * 0.07);
+        distribution.push({ x, y: Math.max(0.3, y) });
+      }
+      
+      const maxY = Math.max(...distribution.map(p => p.y));
+      
+      const pathD = distribution.map((p, i) => {
+        const x = 40 + (p.x / 100) * 420;
+        const y = 115 - (p.y / maxY) * 75;
+        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+      }).join(' ');
+      
+      const areaD = pathD + ` L 460 115 L 40 115 Z`;
+      const markerX = 40 + ((ranking - 1) / 99) * 420;
+      
+      const getColor = (rank) => {
+        if (rank <= 20) return '#dc2626';
+        if (rank <= 40) return '#f97316';
+        if (rank <= 60) return '#eab308';
+        if (rank <= 80) return '#22c55e';
+        return '#0ea5e9';
+      };
+
+      return (
+        <div>
+          <div style={{ marginBottom: '20px', color: '#334155', fontSize: '16px' }}>
+            <strong>{occupation}</strong>
+          </div>
+          
+          <svg width="500" height="155" viewBox="0 0 500 155" style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }}>
+            <defs>
+              <linearGradient id="distFill" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#dc2626" stopOpacity="0.25" />
+                <stop offset="25%" stopColor="#f97316" stopOpacity="0.25" />
+                <stop offset="50%" stopColor="#eab308" stopOpacity="0.25" />
+                <stop offset="75%" stopColor="#22c55e" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.25" />
+              </linearGradient>
+              <linearGradient id="distLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#dc2626" />
+                <stop offset="25%" stopColor="#f97316" />
+                <stop offset="50%" stopColor="#eab308" />
+                <stop offset="75%" stopColor="#22c55e" />
+                <stop offset="100%" stopColor="#0ea5e9" />
+              </linearGradient>
+            </defs>
+            
+            <path d={areaD} fill="url(#distFill)" />
+            <path d={pathD} fill="none" stroke="url(#distLine)" strokeWidth="3" />
+            <line x1="40" y1="115" x2="460" y2="115" stroke="#e2e8f0" strokeWidth="1" />
+            
+            <line x1={markerX} y1="18" x2={markerX} y2="115" stroke={getColor(ranking)} strokeWidth="3" strokeDasharray="6,4" />
+            <circle cx={markerX} cy="22" r="9" fill={getColor(ranking)} stroke="#fff" strokeWidth="2" />
+            <text x={markerX} y="10" fontSize="11" fill={getColor(ranking)} textAnchor="middle" fontWeight="700">YOU</text>
+            
+            <text x="40" y="135" fontSize="11" fill="#64748b" textAnchor="start">Most Exposed</text>
+            <text x="460" y="135" fontSize="11" fill="#64748b" textAnchor="end">Least Exposed</text>
+            <text x="250" y="150" fontSize="11" fill="#94a3b8" textAnchor="middle">All Occupations</text>
+          </svg>
+          
+          <div style={{ marginTop: '12px', fontSize: '15px', color: '#475569' }}>
+            Ranking: <strong style={{ color: getColor(ranking), fontSize: '18px' }}>{ranking}</strong> of 100
+          </div>
+        </div>
+      );
+    }
+
+    function TieredSteps({ ranking, occupation }) {
+      const tiers = [
+        { label: 'Very High', range: '1-20', color: '#dc2626', bgColor: '#fef2f2' },
+        { label: 'High', range: '21-40', color: '#f97316', bgColor: '#fff7ed' },
+        { label: 'Moderate', range: '41-60', color: '#eab308', bgColor: '#fefce8' },
+        { label: 'Low', range: '61-80', color: '#22c55e', bgColor: '#f0fdf4' },
+        { label: 'Very Low', range: '81-100', color: '#0ea5e9', bgColor: '#f0f9ff' },
+      ];
+      
+      const getTierIndex = (rank) => {
+        if (rank <= 20) return 0;
+        if (rank <= 40) return 1;
+        if (rank <= 60) return 2;
+        if (rank <= 80) return 3;
+        return 4;
+      };
+      
+      const activeTier = getTierIndex(ranking);
+
+      return (
+        <div>
+          <div style={{ marginBottom: '24px', color: '#334155', fontSize: '16px' }}>
+            <strong>{occupation}</strong>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '10px', marginBottom: '16px' }}>
+            {tiers.map((tier, index) => {
+              const isActive = index === activeTier;
+              const height = 130 - index * 22;
+              
+              return (
+                <div key={tier.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{
+                    width: '85px',
+                    height: `${height}px`,
+                    backgroundColor: isActive ? tier.color : tier.bgColor,
+                    border: `2px solid ${tier.color}`,
+                    borderRadius: '10px 10px 0 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    position: 'relative'
+                  }}>
+                    {isActive && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '-32px',
+                        backgroundColor: tier.color,
+                        color: '#fff',
+                        padding: '5px 12px',
+                        borderRadius: '14px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                      }}>
+                        ▼ YOU
+                      </div>
+                    )}
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: isActive ? '#fff' : tier.color,
+                      textAlign: 'center',
+                      padding: '4px'
+                    }}>
+                      {tier.label}
+                    </span>
+                    <span style={{ fontSize: '10px', color: isActive ? 'rgba(255,255,255,0.85)' : '#94a3b8' }}>
+                      {tier.range}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: '475px', margin: '0 auto', fontSize: '11px', color: '#64748b' }}>
+            <span>← Most Exposed</span>
+            <span>Least Exposed →</span>
+          </div>
+          
+          <div style={{ marginTop: '16px', fontSize: '15px', color: '#475569' }}>
+            Ranking: <strong style={{ color: tiers[activeTier].color, fontSize: '18px' }}>{ranking}</strong> of 100
+            <span style={{ color: '#94a3b8' }}> ({tiers[activeTier].label} Exposure)</span>
+          </div>
+        </div>
+      );
+    }
+
+    function MinimalCard({ ranking, occupation }) {
+      const getCategory = (rank) => {
+        if (rank <= 20) return { label: 'Very High Exposure', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' };
+        if (rank <= 40) return { label: 'High Exposure', color: '#ea580c', bg: '#fff7ed', border: '#fed7aa' };
+        if (rank <= 60) return { label: 'Moderate Exposure', color: '#ca8a04', bg: '#fefce8', border: '#fef08a' };
+        if (rank <= 80) return { label: 'Low Exposure', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' };
+        return { label: 'Very Low Exposure', color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd' };
+      };
+      
+      const category = getCategory(ranking);
+
+      return (
+        <div style={{
+          backgroundColor: category.bg,
+          border: `2px solid ${category.border}`,
+          borderRadius: '20px',
+          padding: '32px 48px',
+          display: 'inline-block'
+        }}>
+          <div style={{ fontSize: '15px', color: '#64748b', marginBottom: '10px' }}>{occupation}</div>
+          
+          <div style={{ fontSize: '56px', fontWeight: '700', color: category.color, lineHeight: '1' }}>
+            {ranking}<span style={{ fontSize: '22px', color: '#94a3b8' }}>/100</span>
+          </div>
+          
+          <div style={{
+            marginTop: '16px',
+            display: 'inline-block',
+            backgroundColor: category.color,
+            color: '#fff',
+            padding: '8px 20px',
+            borderRadius: '24px',
+            fontSize: '14px',
+            fontWeight: '600'
+          }}>
+            {category.label}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
