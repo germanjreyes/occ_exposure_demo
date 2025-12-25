@@ -8,6 +8,7 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5/papaparse.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'DM Sans', -apple-system, sans-serif; }
@@ -17,80 +18,88 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useMemo } = React;
+    const { useState, useMemo, useEffect } = React;
 
     // =====================================================================
-    // OCCUPATION DATA - EDIT THIS SECTION WITH YOUR ACTUAL DATA
-    // Format: { name: "Occupation Name", ranking: NUMBER }
-    // Rankings: 1 = most exposed to AI, 100 = least exposed to AI
+    // CONFIGURATION - Edit these to match your CSV column names
     // =====================================================================
-    const occupations = [
-      { name: "Telemarketer", ranking: 1 },
-      { name: "Legal Secretary", ranking: 3 },
-      { name: "Bookkeeping Clerk", ranking: 4 },
-      { name: "Tax Preparer", ranking: 5 },
-      { name: "Insurance Underwriter", ranking: 7 },
-      { name: "Data Entry Clerk", ranking: 8 },
-      { name: "Paralegal", ranking: 10 },
-      { name: "Market Research Analyst", ranking: 12 },
-      { name: "Technical Writer", ranking: 14 },
-      { name: "Financial Analyst", ranking: 16 },
-      { name: "Copywriter", ranking: 18 },
-      { name: "Accountant", ranking: 20 },
-      { name: "Human Resources Specialist", ranking: 22 },
-      { name: "Translator", ranking: 24 },
-      { name: "Customer Service Representative", ranking: 26 },
-      { name: "Journalist", ranking: 28 },
-      { name: "Software Developer", ranking: 32 },
-      { name: "Data Analyst", ranking: 35 },
-      { name: "Graphic Designer", ranking: 38 },
-      { name: "Marketing Manager", ranking: 40 },
-      { name: "Management Consultant", ranking: 42 },
-      { name: "Architect", ranking: 45 },
-      { name: "Mechanical Engineer", ranking: 48 },
-      { name: "Civil Engineer", ranking: 50 },
-      { name: "Project Manager", ranking: 52 },
-      { name: "Sales Representative", ranking: 55 },
-      { name: "Teacher (K-12)", ranking: 58 },
-      { name: "Social Worker", ranking: 60 },
-      { name: "Nurse Practitioner", ranking: 62 },
-      { name: "Physical Therapist", ranking: 65 },
-      { name: "Police Officer", ranking: 68 },
-      { name: "Physician", ranking: 70 },
-      { name: "Dentist", ranking: 72 },
-      { name: "Chef", ranking: 75 },
-      { name: "Firefighter", ranking: 78 },
-      { name: "Electrician", ranking: 80 },
-      { name: "Plumber", ranking: 82 },
-      { name: "Construction Worker", ranking: 85 },
-      { name: "Agricultural Worker", ranking: 88 },
-      { name: "Truck Driver", ranking: 90 },
-      { name: "Landscaper", ranking: 92 },
-      { name: "Roofer", ranking: 95 },
-      { name: "Forestry Worker", ranking: 98 },
-    ];
-    // =====================================================================
-    // END OF OCCUPATION DATA
+    const CSV_FILE = "occupations.csv";  // Your CSV filename (same folder)
+    const NAME_COLUMN = "occupation";     // Column name for occupation names
+    const RANKING_COLUMN = "ranking";     // Column name for exposure ranking (1-100)
     // =====================================================================
 
     function App() {
+      const [occupations, setOccupations] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
       const [searchTerm, setSearchTerm] = useState('');
       const [selectedOccupation, setSelectedOccupation] = useState(null);
       const [showDropdown, setShowDropdown] = useState(false);
       const [vizStyle, setVizStyle] = useState('steps');
 
+      // Load CSV on mount
+      useEffect(() => {
+        Papa.parse(CSV_FILE, {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            const parsed = results.data
+              .map(row => ({
+                name: row[NAME_COLUMN]?.trim(),
+                ranking: parseInt(row[RANKING_COLUMN], 10)
+              }))
+              .filter(occ => occ.name && !isNaN(occ.ranking))
+              .sort((a, b) => a.ranking - b.ranking);
+            
+            setOccupations(parsed);
+            setLoading(false);
+          },
+          error: (err) => {
+            setError(`Failed to load CSV: ${err.message}`);
+            setLoading(false);
+          }
+        });
+      }, []);
+
       const filteredOccupations = useMemo(() => {
-        if (!searchTerm) return occupations;
-        return occupations.filter(occ => 
-          occ.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }, [searchTerm]);
+        if (!searchTerm) return occupations.slice(0, 50); // Show first 50 when empty
+        const term = searchTerm.toLowerCase();
+        return occupations
+          .filter(occ => occ.name.toLowerCase().includes(term))
+          .slice(0, 50); // Limit dropdown to 50 results
+      }, [searchTerm, occupations]);
 
       const handleSelect = (occ) => {
         setSelectedOccupation(occ);
         setSearchTerm(occ.name);
         setShowDropdown(false);
       };
+
+      if (loading) {
+        return (
+          <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center', color: '#64748b' }}>
+              <div style={{ fontSize: '32px', marginBottom: '16px' }}>⏳</div>
+              <p>Loading occupations...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (error) {
+        return (
+          <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center', color: '#dc2626', maxWidth: '400px', padding: '20px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '16px' }}>⚠️</div>
+              <p style={{ marginBottom: '12px' }}>{error}</p>
+              <p style={{ fontSize: '13px', color: '#64748b' }}>
+                Make sure <code style={{ backgroundColor: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{CSV_FILE}</code> is in the same folder as this HTML file.
+              </p>
+            </div>
+          </div>
+        );
+      }
 
       return (
         <div style={{
@@ -114,6 +123,9 @@
                 Enter your intended occupation to see how exposed it is to AI automation.
                 <br />
                 <span style={{ fontSize: '13px' }}>Rankings from 1 (most exposed) to 100 (least exposed)</span>
+              </p>
+              <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '8px' }}>
+                {occupations.length} occupations loaded
               </p>
             </div>
 
@@ -148,7 +160,7 @@
               </div>
 
               {/* Dropdown */}
-              {showDropdown && searchTerm && filteredOccupations.length > 0 && (
+              {showDropdown && filteredOccupations.length > 0 && (
                 <div style={{
                   position: 'absolute',
                   top: '100%',
@@ -158,13 +170,13 @@
                   borderRadius: '12px',
                   boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
                   marginTop: '8px',
-                  maxHeight: '280px',
+                  maxHeight: '320px',
                   overflowY: 'auto',
                   zIndex: 100
                 }}>
-                  {filteredOccupations.map((occ) => (
+                  {filteredOccupations.map((occ, idx) => (
                     <div
-                      key={occ.name}
+                      key={`${occ.name}-${idx}`}
                       onClick={() => handleSelect(occ)}
                       style={{
                         padding: '14px 20px',
@@ -189,6 +201,11 @@
                       </span>
                     </div>
                   ))}
+                  {filteredOccupations.length === 50 && searchTerm && (
+                    <div style={{ padding: '12px 20px', fontSize: '12px', color: '#94a3b8', textAlign: 'center', backgroundColor: '#f8fafc' }}>
+                      Showing first 50 results. Keep typing to narrow down.
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -280,36 +297,6 @@
                 </p>
               </div>
             )}
-
-            {/* Sample Occupations */}
-            <div style={{ marginTop: '40px' }}>
-              <p style={{ fontSize: '13px', color: '#94a3b8', textAlign: 'center', marginBottom: '16px' }}>
-                Or try one of these examples:
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                {['Software Developer', 'Nurse Practitioner', 'Accountant', 'Electrician', 'Teacher (K-12)'].map(name => {
-                  const occ = occupations.find(o => o.name === name);
-                  if (!occ) return null;
-                  return (
-                    <button
-                      key={name}
-                      onClick={() => handleSelect(occ)}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '13px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '20px',
-                        backgroundColor: '#fff',
-                        color: '#64748b',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </div>
       );
