@@ -4,7 +4,7 @@ Interactive visualization tool that shows how exposed different occupations are 
 
 ## Live Demo
 
-Visit: `https://germanjreyes.github.io/occ_exposure_demo/`
+Visit: `https://germanjreyes.github.io/occ_viz_demo/`
 
 ## How It Works
 
